@@ -2,11 +2,17 @@ package com.nikitosoleil.server;
 
 import com.nikitosoleil.Logger;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Stack;
 
 public class Server {
     private int x;
@@ -14,8 +20,7 @@ public class Server {
     private Stack<String> functions;
     private List<FunctionSocket> sockets;
     private ServerSocket serverSocket;
-    private volatile Map<String, String> results;
-    private boolean isUp = true;
+    private volatile State state;
     private Process fProcess, gProcess;
     private boolean wasPrompted = false;
     private int currentMode = 1;
@@ -40,7 +45,7 @@ public class Server {
         }
 
         sockets = new ArrayList<>();
-        results = new HashMap<>();
+        state = new State();
     }
 
     public void establishConnection() throws Exception {
@@ -80,11 +85,11 @@ public class Server {
         }
 
 
-        while (isUp && !analyze(results)) {
+        while (state.waiting()) {
             if (currentMode == 3) {
-                currentState();
+                state.printState();
                 endProcesses();
-                isUp = false;
+                state.interrupt();
                 continue;
             }
 
@@ -103,15 +108,15 @@ public class Server {
 
         }
 
-        if (isUp) {
-            System.out.println("Result " + operation(results));
+        if (state.computed()) {
+            System.out.println("Result " + state.result());
             System.out.println("Time " + (System.currentTimeMillis() - startingTime) / 1000. + " seconds");
         }
 
         for (Thread thread : threads) {
             thread.interrupt();
         }
-        isUp = false;
+        state.interrupt();
     }
 
     private void doPrompt(List<Thread> threads) {
@@ -162,64 +167,36 @@ public class Server {
 
     private void listenSocket(FunctionSocket functionSocket) {
 
-        if (functionSocket.socket.isClosed() || !isUp)
+        if (functionSocket.socket.isClosed())
             return;
         try {
             BufferedReader bufferedReader =
                     new BufferedReader(new InputStreamReader(functionSocket.socket.getInputStream()));
             String line;
-            while ((line = bufferedReader.readLine()) == null) ;
-            bufferedReader.close();
-            functionSocket.socket.close();
-            String[] s = line.split(" ");
-            String res;
-            if (s[0].equals("0"))
-                res = "NaN";
-            else
-                res = s[1];
-            synchronized (notifier) {
-                results.put(functionSocket.name, res);
-                Logger.log("NOTIFY " + Thread.currentThread());
-                notifier.notify();
+            while ((line = bufferedReader.readLine()) == null && state.waiting()) ;
+            if (state.waiting()) {
+                bufferedReader.close();
+                functionSocket.socket.close();
+                String[] s = line.split(" ");
+                String res;
+                if (s[0].equals("0"))
+                    res = "NaN";
+                else
+                    res = s[1];
+                synchronized (notifier) {
+                    state.submit(functionSocket.name, res);
+                    Logger.log("NOTIFY " + Thread.currentThread());
+                    notifier.notify();
+                }
             }
         } catch (IOException ignored) {
         }
     }
 
-
-    public void currentState() {
-        String state = "";
-        for (FunctionSocket functionSocket : sockets) {
-            if (results.get(functionSocket.name) == null) {
-                System.out.println(functionSocket.name + " not finished");
-            }
-        }
+    public void printState() {
+        state.printState();
     }
 
-    private boolean analyze(Map<String, String> res) {
-
-        Logger.log("Analyze called");
-        return !operation(res).equals("UNFINISHED");
-    }
-
-    private String operation(Map<String, String> res) {
-        boolean hasNan = false;
-        int operationResult = 1;
-        for (Map.Entry<String, String> entry : res.entrySet()) {
-            if (entry.getValue().equals("NaN"))
-                hasNan = true;
-            else
-                operationResult = operationResult * Integer.parseInt(entry.getValue());
-        }
-        if (operationResult == 0)
-            return "0";
-        if (res.size() == 2) {
-            if (hasNan)
-                return "NaN";
-            return Integer.toString(operationResult);
-        }
-        return "UNFINISHED";
-    }
 
     public int getPort() {
         return port;
@@ -229,7 +206,7 @@ public class Server {
         try {
             serverSocket.close();
             endProcesses();
-            isUp = false;
+            state.interrupt();
         } catch (IOException e) {
             e.printStackTrace();
         }

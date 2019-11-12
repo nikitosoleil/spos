@@ -1,7 +1,7 @@
 package com.nikitosoleil.server;
 
-import com.nikitosoleil.client.FunctionProcess;
 import com.nikitosoleil.Logger;
+import com.nikitosoleil.client.FunctionProcess;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +64,7 @@ public class Manager {
             System.out.println("Functions f, g has not finished");
             return;
         }
-        server.currentState();
+        server.printState();
     }
 
     public boolean isUp() {
