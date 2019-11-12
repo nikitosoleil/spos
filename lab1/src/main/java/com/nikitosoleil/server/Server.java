@@ -71,7 +71,7 @@ public class Server {
         }
     }
 
-    public void startListening(Process fProcess, Process gProcess) throws InterruptedException {
+    public void startWaiting(Process fProcess, Process gProcess) throws InterruptedException {
         startingTime = System.currentTimeMillis();
 
         this.fProcess = fProcess;
@@ -88,7 +88,6 @@ public class Server {
         while (state.waiting()) {
             if (currentMode == 3) {
                 state.printState();
-                endProcesses();
                 state.interrupt();
                 continue;
             }
@@ -105,8 +104,9 @@ public class Server {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-
         }
+
+        endProcesses();
 
         if (state.computed()) {
             System.out.println("Result " + state.result());

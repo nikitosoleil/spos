@@ -5,7 +5,7 @@ import com.nikitosoleil.Logger;
 import java.util.Scanner;
 
 public class Main {
-    private static final boolean USE_LOGGER = true;
+    private static final boolean USE_LOGGER = false;
 
     private static Manager manager;
     public static boolean usePrompts;

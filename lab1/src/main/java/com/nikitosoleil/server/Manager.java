@@ -25,7 +25,7 @@ public class Manager {
             e.printStackTrace();
         }
         try {
-            server.startListening(fProcess, gProcess);
+            server.startWaiting(fProcess, gProcess);
             isUp = false;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
