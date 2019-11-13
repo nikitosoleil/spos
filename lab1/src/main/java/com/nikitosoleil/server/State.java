@@ -71,8 +71,9 @@ public class State {
     }
 
     public void printState() {
-        for (String name : results.keySet()) {
-            System.out.println(name + " finished");
+        for (String name : new String[]{"f", "g"}) {
+            if (!results.containsKey(name))
+                System.out.println(name + " not finished");
         }
     }
 }

@@ -28,10 +28,6 @@ public class Main {
 
     }
 
-    public static void restartManager() {
-        manager.finish();
-    }
-
     private static void promptVariant() {
         System.out.println("Press (1) to stop via F4 or (2) to use prompts");
         Scanner scanner = new Scanner(System.in);

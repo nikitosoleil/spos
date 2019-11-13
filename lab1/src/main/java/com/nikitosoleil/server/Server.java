@@ -110,8 +110,8 @@ public class Server {
 
         if (state.computed()) {
             System.out.println("Result " + state.result());
-            System.out.println("Time " + (System.currentTimeMillis() - startingTime) / 1000. + " seconds");
         }
+        System.out.println("Time " + (System.currentTimeMillis() - startingTime) / 1000. + " seconds");
 
         for (Thread thread : threads) {
             thread.interrupt();

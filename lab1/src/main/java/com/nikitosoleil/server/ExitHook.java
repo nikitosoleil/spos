@@ -23,7 +23,7 @@ public class ExitHook {
                 if (event.getVirtualKeyCode() == GlobalKeyEvent.VK_F4) {
                     System.out.println("F4 pressed");
                     Main.currentState();
-                    Main.restartManager();
+                    Main.finish();
                 }
                 // Ends program work with closing processes
                 else if (event.getVirtualKeyCode() == GlobalKeyEvent.VK_F5) {
