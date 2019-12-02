@@ -29,7 +29,7 @@ public class ProcessSimulation implements Comparable<ProcessSimulation> {
     public boolean isAvailable(int globalTime) {
         if (ratio < 1e-9)
             return true;
-        return lastTimeBlockedGlobal + blockAfter <= globalTime;
+        return lastTimeBlockedGlobal + timeInBlock <= globalTime;
     }
 
     public boolean isDone() {

@@ -48,7 +48,7 @@ public class GuaranteedSchedulingAlgorithm implements SchedulingAlgorithm {
 
         while (comptime < runtime && !processes.isEmpty()) {
             ProcessSimulation proc = nextAvailable(comptime);
-            if (proc != null && !proc.equals(prev))
+            if (proc != null)// && !proc.equals(prev))
                 logState(out, proc, REGISTERED);
             if (proc != null) {
                 proc.setCpuDone(proc.getCpuDone() + 1);
@@ -58,6 +58,8 @@ public class GuaranteedSchedulingAlgorithm implements SchedulingAlgorithm {
 
                     proc.setNumBlocked(proc.getNumBlocked() + 1);
                     logState(out, proc, I_O_BLOCKED);
+                } else {
+                    logState(out, proc, READY);
                 }
 
                 if (proc.isDone()) {
