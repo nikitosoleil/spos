@@ -8,20 +8,111 @@ package com.nikitosoleil;
 
 // Created by Alexander Reeder, 2001 January 06
 
+import javax.xml.validation.Validator;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Scheduling {
-
-    private static int processnum;
+    public static int DEFAULT_TIME_IN_BLOCK = 50;
+    private static int processNum;
     private static int meanDev;
     private static int standardDev;
-    private static int runtime;
-    private static Vector<sProcess> processVector = new Vector<>();
-    private static Results result = new Results("null", "null", 0);
+    private static int runTime;
+    private static Vector<ProcessSimulation> processVector = new Vector<>();
+    private static Results result;
     private static String resultsFile = "Summary-Results";
+
+    public static void main(String[] args) {
+        canBeRead(args);
+        init(args[0]);
+        if (processVector.size() < processNum) {
+            addProcessesUpToProcessNum();
+        }
+        setPIDs();
+        SchedulingAlgorithm algorithm = new GuaranteedSchedulingAlgorithm();
+
+        Logger.getLogger("main").log(Level.INFO, "Working...");
+        result = algorithm.run(runTime, processVector);
+        printResultsToFile();
+        Logger.getLogger("main").log(Level.INFO, "Completed");
+    }
+
+    private static void setPIDs() {
+        for (int i = 0; i < processVector.size(); i++) {
+            processVector.get(i).setPID(i);
+        }
+    }
+
+    private static String format(String str) {
+        int len = 16;
+        StringBuilder strBuilder = new StringBuilder(str);
+        while (strBuilder.length() < len)
+            strBuilder.append(" ");
+        str = strBuilder.toString();
+        return str;
+    }
+
+    private static String format(Integer val) {
+        return format(Integer.toString(val));
+    }
+
+    private static void printResultsToFile() {
+        try {
+            File resFile = new File("res/" + resultsFile);
+            resFile.createNewFile();
+            PrintStream out = new PrintStream(resFile);
+
+            out.println("Scheduling Type: " + result.schedulingType);
+            out.println("Scheduling Name: " + result.schedulingName);
+            out.println("Simulation Available Time: " + runTime);
+            out.println("Simulation Run Time: " + result.compuTime);
+            out.println("Mean: " + meanDev);
+            out.println("Standard Deviation: " + standardDev);
+
+            out.print(format("Process"));
+            out.print(format("CPU Time"));
+            out.print(format("Block after"));
+            out.print(format("Time in block"));
+            out.print(format("CPU Completed"));
+            out.print(format("CPU Blocked"));
+            out.print(format("Final state"));
+            out.print(format("Last ratio"));
+            out.println();
+            for (int i = 0; i < processVector.size(); i++) {
+                ProcessSimulation process = processVector.elementAt(i);
+                out.println(process);
+            }
+
+            out.println();
+            out.println();
+            out.println("Total CPU Needed " + totalCpuNeeded(processVector));
+            out.close();
+        } catch (IOException e) { /* Handle exceptions */ }
+    }
+
+    private static void addProcessesUpToProcessNum() {
+        int i = 0;
+        while (processVector.size() < processNum) {
+            double X = Common.R1();
+            while (X == -1.0) {
+                X = Common.R1();
+            }
+            X = X * standardDev;
+            int cputime = (int) X + meanDev;
+            processVector.addElement(new ProcessSimulation(cputime, i * 100, 0, -10000000, 0, DEFAULT_TIME_IN_BLOCK));
+            i++;
+        }
+    }
+
+    private static int totalCpuNeeded(Vector<ProcessSimulation> processSimulations) {
+        int res = 0;
+        for (ProcessSimulation processSimulation : processSimulations) {
+            res += processSimulation.getCpuTime();
+        }
+        return res;
+    }
 
     private static void init(String fileName) {
         File f = new File(fileName);
@@ -32,12 +123,14 @@ public class Scheduling {
 
     private static void initFromFile(File f) throws IOException {
         String line;
-        DataInputStream in = new DataInputStream(new FileInputStream(f));
+        FileInputStream fileStream = new FileInputStream(f);
+        InputStreamReader inputStreamReader = new InputStreamReader(fileStream);
+        BufferedReader in = new BufferedReader(inputStreamReader);
         while ((line = in.readLine()) != null) {
             if (line.startsWith("numprocess")) {
                 StringTokenizer st = new StringTokenizer(line);
                 st.nextToken();
-                processnum = Common.s2i(st.nextToken());
+                processNum = Common.s2i(st.nextToken());
             }
             if (line.startsWith("meandev")) {
                 StringTokenizer st = new StringTokenizer(line);
@@ -50,19 +143,19 @@ public class Scheduling {
                 standardDev = Common.s2i(st.nextToken());
             }
             if (line.startsWith("process")) {
-                sProcess newProcess = generateProcessFromLine(line);
+                ProcessSimulation newProcess = generateProcessFromLine(line);
                 processVector.addElement(newProcess);
             }
             if (line.startsWith("runtime")) {
                 StringTokenizer st = new StringTokenizer(line);
                 st.nextToken();
-                runtime = Common.s2i(st.nextToken());
+                runTime = Common.s2i(st.nextToken());
             }
         }
         in.close();
     }
 
-    private static sProcess generateProcessFromLine(String line) {
+    private static ProcessSimulation generateProcessFromLine(String line) {
         int ioblocking;
         double X;
         int cputime;
@@ -75,64 +168,10 @@ public class Scheduling {
         }
         X = X * standardDev;
         cputime = (int) X + meanDev;
-        return new sProcess(cputime, ioblocking, 0, 0, 0);
+        int timeInBlock = Integer.parseInt(st.nextToken());
+        return new ProcessSimulation(cputime, ioblocking, 0, 0, 0, timeInBlock);
     }
 
-    private static void debug() {
-        int i = 0;
-
-        System.out.println("processnum " + processnum);
-        System.out.println("meandevm " + meanDev);
-        System.out.println("standdev " + standardDev);
-        int size = processVector.size();
-        for (i = 0; i < size; i++) {
-            sProcess process = (sProcess) processVector.elementAt(i);
-            System.out.println("process " + i + " " + process.getCputime() + " " + process.getIoblocking() + " " + process.getCpudone() + " " + process.getNumblocked());
-        }
-        System.out.println("runtime " + runtime);
-    }
-
-    public static void main(String[] args) {
-        canBeRead(args);
-        Logger.getLogger("main").log(Level.INFO, "Working...");
-        init(args[0]);
-
-        if (processVector.size() < processnum) {
-            int i = 0;
-            while (processVector.size() < processnum) {
-                double X = Common.R1();
-                while (X == -1.0) {
-                    X = Common.R1();
-                }
-                X = X * standardDev;
-                int cputime = (int) X + meanDev;
-                processVector.addElement(new sProcess(cputime, i * 100, 0, 0, 0));
-                i++;
-            }
-        }
-        result = SchedulingAlgorithm.run(runtime, processVector, result);
-        try {
-            PrintStream out = new PrintStream(new FileOutputStream(resultsFile));
-            out.println("Scheduling Type: " + result.schedulingType);
-            out.println("Scheduling Name: " + result.schedulingName);
-            out.println("Simulation Run Time: " + result.compuTime);
-            out.println("Mean: " + meanDev);
-            out.println("Standard Deviation: " + standardDev);
-            out.println("Process #\tCPU Time\tIO Blocking\tCPU Completed\tCPU Blocked");
-            for (int i = 0; i < processVector.size(); i++) {
-                sProcess process = processVector.elementAt(i);
-                out.print(i);
-                if (i < 100) {
-                    out.print("\t\t");
-                } else {
-                    out.print("\t");
-                }
-                out.println(process);
-            }
-            out.close();
-        } catch (IOException e) { /* Handle exceptions */ }
-        Logger.getLogger("main").log(Level.INFO, "Completed");
-    }
 
     private static void canBeRead(String[] args) {
         if (args.length != 1) {
