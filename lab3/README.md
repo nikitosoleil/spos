@@ -44,9 +44,9 @@ Outputs of the simulation can be found at ```res/```
 
 #### Summary-Processes structure
 
-Each 2 lines represent single timestamp: 
-- 1st line is currently selected process (if no changes - not printed again)
-- 2nd line is status after the timestamp
+Each 2 lines represent single tick: 
+- 1st line is currently selected (registered) process
+- 2nd line is status after the tick
 
 Process: [process id] [process state] [cpu time needed for process to finish]
 [process burst time] [total time process worked without block] [scheduling ratio]
