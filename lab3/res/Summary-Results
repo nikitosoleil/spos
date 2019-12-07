@@ -1,20 +1,20 @@
 Scheduling Type: Interactive
 Scheduling Name: Guaranteed
 Simulation Available Time: 3500
-Simulation Run Time: 1122
+Simulation Run Time: 2691
 Mean: 200
 Standard Deviation: 100
 Process         CPU Time        Block after     Time in block   CPU Completed   CPU Blocked     Final state     Last ratio      
-0               311             100             200             311             3 times         Done            0.276           
-1               18              10              32              18              1 times         Done            1.6             
-2               18              20              62              18              0 times         Done            1.384           
-3               18              150             100             18              0 times         Done            0.563           
-4               18              50              120             18              0 times         Done            0.68            
-5               18              400             10              18              0 times         Done            2.942           
-6               18              450             20              18              0 times         Done            3.333           
-7               18              10              100             18              1 times         Done            0.276           
-8               18              10              100             18              1 times         Done            0.206           
-9               18              1000            1000            18              0 times         Done            0.033           
+0               360             100             200             360             3 times         Done            0.668           
+1               70              10              32              70              7 times         Done            0.448           
+2               70              20              62              70              3 times         Done            0.905           
+3               70              150             100             70              0 times         Done            1.131           
+4               70              50              120             70              1 times         Done            1.131           
+5               70              400             10              70              0 times         Done            1.131           
+6               70              450             20              70              0 times         Done            1.131           
+7               207             10              100             207             20 times        Done            0.191           
+8               207             10              100             207             20 times        Done            0.191           
+9               207             1000            1000            207             0 times         Done            0.96            
 
 
-Total CPU Needed 473
+Total CPU Needed 1401

@@ -20,6 +20,7 @@ public class Scheduling {
     private static int meanDev;
     private static int standardDev;
     private static int runTime;
+    private static int period;
     private static Vector<ProcessSimulation> processVector = new Vector<>();
     private static Results result;
     private static String resultsFile = "Summary-Results";
@@ -34,7 +35,7 @@ public class Scheduling {
         SchedulingAlgorithm algorithm = new GuaranteedSchedulingAlgorithm();
 
         Logger.getLogger("main").log(Level.INFO, "Working...");
-        result = algorithm.run(runTime, processVector);
+        result = algorithm.run(runTime, period, processVector);
         printResultsToFile();
         Logger.getLogger("main").log(Level.INFO, "Completed");
     }
@@ -150,6 +151,11 @@ public class Scheduling {
                 StringTokenizer st = new StringTokenizer(line);
                 st.nextToken();
                 runTime = Common.s2i(st.nextToken());
+            }
+            if (line.startsWith("period")) {
+                StringTokenizer st = new StringTokenizer(line);
+                st.nextToken();
+                period = Common.s2i(st.nextToken());
             }
         }
         in.close();

@@ -12,17 +12,20 @@ public class GuaranteedSchedulingAlgorithm implements SchedulingAlgorithm {
     private AutoSortedList<ProcessSimulation> processes;
     private PrintStream out;
     private int comptime = 0;
+    private int lastUpdate = 0;
     private int completedCount = 0;
     private int runtime;
+    private int period;
 
     public GuaranteedSchedulingAlgorithm() { // Further initialisation via run method
     }
 
     @Override
-    public Results run(int runtime, Vector<ProcessSimulation> processVector) {
+    public Results run(int runtime, int period, Vector<ProcessSimulation> processVector) {
         processes = new AutoSortedList<>(processVector);
         Results result = new Results("Interactive", "Guaranteed", 0);
         this.runtime = runtime;
+        this.period = period;
 
         String resultsFile = "Summary-Processes";
 
@@ -42,40 +45,39 @@ public class GuaranteedSchedulingAlgorithm implements SchedulingAlgorithm {
         return result;
     }
 
-    // Returns total used CPU time
     private int guaranteedImplementation() {
-        ProcessSimulation prev = null;
-
+        ProcessSimulation proc = null;
         while (comptime < runtime && !processes.isEmpty()) {
-            ProcessSimulation proc = nextAvailable(comptime);
-            if (proc != null)// && !proc.equals(prev))
-                logState(out, proc, REGISTERED);
+            if (proc == null) {
+                proc = nextAvailable(comptime);
+                if (proc != null)
+                    logState(out, proc, RUNNING);
+                lastUpdate = comptime;
+            }
             if (proc != null) {
-                proc.setCpuDone(proc.getCpuDone() + 1);
                 if (proc.getCpuDone() - proc.getLastTimeBlockedLocal() >= proc.getBlockAfter()) {
                     proc.setLastTimeBlockedGlobal(comptime);
                     proc.setLastTimeBlockedLocal(proc.getCpuDone());
-
                     proc.setNumBlocked(proc.getNumBlocked() + 1);
                     logState(out, proc, I_O_BLOCKED);
-                } else {
-                    logState(out, proc, READY);
-                }
-
-                if (proc.isDone()) {
+                    proc = null;
+                } else if (proc.isDone()) {
                     completedCount++;
-                    logState(out, proc, COMPLETED);
                     processes.remove(proc);
+                    logState(out, proc, COMPLETED);
+                    proc = null;
                 }
             }
-
-            if (processes.isEmpty()) {
-                logFinished(out);
-                return comptime;
+            if ((comptime - lastUpdate) == period) {
+                updateRatios();
+                if (proc != null) {
+                    logState(out, proc, READY);
+                    proc = null;
+                }
             }
+            if (proc != null)
+                proc.setCpuDone(proc.getCpuDone() + 1);
             comptime++;
-            prev = proc;
-            updateRatios();
         }
         if (processes.isEmpty()) {
             logFinished(out);

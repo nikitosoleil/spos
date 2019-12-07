@@ -37,6 +37,9 @@ process 1000 1000
 
 // simulation duration, in milliseconds
 runtime 3500
+
+// time between re-scheduling
+period 50
 ```
 ## Changes in output files
 
@@ -44,12 +47,10 @@ Outputs of the simulation can be found at ```res/```
 
 #### Summary-Processes structure
 
-Each 2 lines represent single tick: 
-- 1st line is currently selected (registered) process
-- 2nd line is status after the tick
-
+Each line represents the change  in state of some process in the following form:  
 Process: [process id] [process state] [cpu time needed for process to finish]
 [process burst time] [total time process worked without block] [scheduling ratio]
+
 
 #### Summary-Results structure
 
