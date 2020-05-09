@@ -41,7 +41,7 @@ public class Kernel extends Thread
     int physical = 0;
     int physical_count = 0;
     int inMemTime = 0;
-    int lastTouchTime = 0;
+    int sinceTouchTime = 0;
     int map_count = 0;
     double power = 14;
     long high = 0;
@@ -126,10 +126,10 @@ public class Kernel extends Thread
                 System.out.println("MemoryManagement: Invalid inMemTime in " + config);
                 System.exit(-1);
               }
-              lastTouchTime = Common.s2i(st.nextToken());
-              if (lastTouchTime < 0)
+              sinceTouchTime = Common.s2i(st.nextToken());
+              if (sinceTouchTime < 0)
               {
-                System.out.println("MemoryManagement: Invalid lastTouchTime in " + config);
+                System.out.println("MemoryManagement: Invalid sinceTouchTime in " + config);
                 System.exit(-1);
               }
               Page page = (Page) memVector.elementAt(id);
@@ -137,7 +137,7 @@ public class Kernel extends Thread
               page.R = R;
               page.M = M;
               page.inMemTime = inMemTime;
-              page.lastTouchTime = lastTouchTime;
+              page.sinceTouchTime = sinceTouchTime;
             }
           }
           if (line.startsWith("enable_logging")) 
@@ -434,7 +434,7 @@ public class Kernel extends Thread
       else 
       {
         page.R = 1;
-        page.lastTouchTime = 0;   
+        page.sinceTouchTime = 0;
         if ( doFileLog )
         {
           printLogFile( "READ " + Long.toString( instruct.addr , addressradix ) + " ... okay" );
@@ -463,7 +463,7 @@ public class Kernel extends Thread
       else 
       {
         page.M = 1;
-        page.lastTouchTime = 0;
+        page.sinceTouchTime = 0;
         if ( doFileLog )
         {
           printLogFile( "WRITE " + Long.toString(instruct.addr , addressradix) + " ... okay" );
@@ -477,14 +477,14 @@ public class Kernel extends Thread
     for ( i = 0; i < virtPageNum; i++ ) 
     {
       Page page = ( Page ) memVector.elementAt( i );
-      if ( page.R == 1 && page.lastTouchTime == 10 ) 
+      if ( page.R == 1 && page.sinceTouchTime == 10 )
       {
         page.R = 0;
       }
       if ( page.physical != -1 ) 
       {
         page.inMemTime = page.inMemTime + 10;
-        page.lastTouchTime = page.lastTouchTime + 10;
+        page.sinceTouchTime = page.sinceTouchTime + 10;
       }
     }
     runs++;
@@ -504,7 +504,7 @@ public class Kernel extends Thread
     controlPanel.RValueLabel.setText( "0" ) ;
     controlPanel.MValueLabel.setText( "0" ) ;
     controlPanel.inMemTimeValueLabel.setText( "0" ) ;
-    controlPanel.lastTouchTimeValueLabel.setText( "0" ) ;
+    controlPanel.sinceTouchTimeValueLabel.setText( "0" ) ;
     controlPanel.lowValueLabel.setText( "0" ) ;
     controlPanel.highValueLabel.setText( "0" ) ;
     init( command_file , config_file );

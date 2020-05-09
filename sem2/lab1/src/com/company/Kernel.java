@@ -40,7 +40,7 @@ public class Kernel extends Thread {
         int physical = 0;
         int physical_count = 0;
         int inMemTime = 0;
-        int lastTouchTime = 0;
+        int sinceTouchTime = 0;
         int map_count = 0;
         double power = 14;
         long high = 0;
@@ -106,9 +106,9 @@ public class Kernel extends Thread {
                                 System.out.println("MemoryManagement: Invalid inMemTime in " + config);
                                 System.exit(-1);
                             }
-                            lastTouchTime = Common.s2i(st.nextToken());
-                            if (lastTouchTime < 0) {
-                                System.out.println("MemoryManagement: Invalid lastTouchTime in " + config);
+                            sinceTouchTime = Common.s2i(st.nextToken());
+                            if (sinceTouchTime < 0) {
+                                System.out.println("MemoryManagement: Invalid sinceTouchTime in " + config);
                                 System.exit(-1);
                             }
                             Page page = (Page) memVector.elementAt(id);
@@ -116,7 +116,7 @@ public class Kernel extends Thread {
                             page.R = R;
                             page.M = M;
                             page.inMemTime = inMemTime;
-                            page.lastTouchTime = lastTouchTime;
+                            page.sinceTouchTime = sinceTouchTime;
                         }
                     }
                     if (line.startsWith("enable_logging")) {
@@ -257,7 +257,7 @@ public class Kernel extends Thread {
             if (page.physical == -1) {
                 controlPanel.removePhysicalPage(i);
             } else {
-                controlPanel.addPhysicalPage(i, page.physical);
+                controlPanel.addPhysicalPage(page.id, page.physical);
             }
         }
         for (i = 0; i < instructVector.size(); i++) {
@@ -323,12 +323,12 @@ public class Kernel extends Thread {
         Instruction instruct = (Instruction) instructVector.elementAt(runs);
         controlPanel.instructionValueLabel.setText(instruct.inst);
         controlPanel.addressValueLabel.setText(Long.toString(instruct.addr, addressradix));
-        getPage(Virtual2Physical.pageNum(instruct.addr, virtPageNum, block));
+        getPage(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
         if (controlPanel.pageFaultValueLabel.getText() == "YES") {
             controlPanel.pageFaultValueLabel.setText("NO");
         }
         if (instruct.inst.startsWith("READ")) {
-            Page page = (Page) memVector.elementAt(Virtual2Physical.pageNum(instruct.addr, virtPageNum, block));
+            Page page = (Page) memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
             if (page.physical == -1) {
                 if (doFileLog) {
                     printLogFile("READ " + Long.toString(instruct.addr, addressradix) + " ... page fault");
@@ -336,11 +336,11 @@ public class Kernel extends Thread {
                 if (doStdoutLog) {
                     System.out.println("READ " + Long.toString(instruct.addr, addressradix) + " ... page fault");
                 }
-                PageFault.replacePage(memVector, virtPageNum, Virtual2Physical.pageNum(instruct.addr, virtPageNum, block), controlPanel);
+                PageFault.replacePage(memVector, virtPageNum, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel);
                 controlPanel.pageFaultValueLabel.setText("YES");
             } else {
                 page.R = 1;
-                page.lastTouchTime = 0;
+                page.sinceTouchTime = 0;
                 if (doFileLog) {
                     printLogFile("READ " + Long.toString(instruct.addr, addressradix) + " ... okay");
                 }
@@ -350,7 +350,7 @@ public class Kernel extends Thread {
             }
         }
         if (instruct.inst.startsWith("WRITE")) {
-            Page page = (Page) memVector.elementAt(Virtual2Physical.pageNum(instruct.addr, virtPageNum, block));
+            Page page = (Page) memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
             if (page.physical == -1) {
                 if (doFileLog) {
                     printLogFile("WRITE " + Long.toString(instruct.addr, addressradix) + " ... page fault");
@@ -358,11 +358,11 @@ public class Kernel extends Thread {
                 if (doStdoutLog) {
                     System.out.println("WRITE " + Long.toString(instruct.addr, addressradix) + " ... page fault");
                 }
-                PageFault.replacePage(memVector, virtPageNum, Virtual2Physical.pageNum(instruct.addr, virtPageNum, block), controlPanel);
+                PageFault.replacePage(memVector, virtPageNum, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel);
                 controlPanel.pageFaultValueLabel.setText("YES");
             } else {
                 page.M = 1;
-                page.lastTouchTime = 0;
+                page.sinceTouchTime = 0;
                 if (doFileLog) {
                     printLogFile("WRITE " + Long.toString(instruct.addr, addressradix) + " ... okay");
                 }
@@ -373,12 +373,12 @@ public class Kernel extends Thread {
         }
         for (i = 0; i < virtPageNum; i++) {
             Page page = (Page) memVector.elementAt(i);
-            if (page.R == 1 && page.lastTouchTime == 10) {
+            if (page.R == 1 && page.sinceTouchTime == 10) {
                 page.R = 0;
             }
             if (page.physical != -1) {
                 page.inMemTime = page.inMemTime + 10;
-                page.lastTouchTime = page.lastTouchTime + 10;
+                page.sinceTouchTime = page.sinceTouchTime + 10;
             }
         }
         runs++;
@@ -398,7 +398,7 @@ public class Kernel extends Thread {
         controlPanel.RValueLabel.setText("0");
         controlPanel.MValueLabel.setText("0");
         controlPanel.inMemTimeValueLabel.setText("0");
-        controlPanel.lastTouchTimeValueLabel.setText("0");
+        controlPanel.sinceTouchTimeValueLabel.setText("0");
         controlPanel.lowValueLabel.setText("0");
         controlPanel.highValueLabel.setText("0");
         init(command_file, config_file);

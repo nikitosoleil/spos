@@ -82,7 +82,7 @@ public class ControlPanel extends Frame
   Label RValueLabel = new Label("0" , Label.LEFT) ;
   Label MValueLabel = new Label("0" , Label.LEFT) ;
   Label inMemTimeValueLabel = new Label("0" , Label.LEFT) ;
-  Label lastTouchTimeValueLabel = new Label("0" , Label.LEFT) ;
+  Label sinceTouchTimeValueLabel = new Label("0" , Label.LEFT) ;
   Label lowValueLabel = new Label("0" , Label.LEFT) ;
   Label highValueLabel = new Label("0" , Label.LEFT) ;
   Label l0 = new Label(null, Label.CENTER);
@@ -540,8 +540,8 @@ public class ControlPanel extends Frame
     inMemTimeValueLabel.reshape(395,180+25,200,15 );
     add( inMemTimeValueLabel );
 
-    lastTouchTimeValueLabel.reshape( 395,195+25,200,15 );
-    add( lastTouchTimeValueLabel );
+    sinceTouchTimeValueLabel.reshape( 395,195+25,200,15 );
+    add( sinceTouchTimeValueLabel );
 
     lowValueLabel.reshape( 395,210+25,230,15 );
     add( lowValueLabel );
@@ -605,9 +605,9 @@ public class ControlPanel extends Frame
     inMemTimeLabel.reshape(285,180+25,110,15);
     add(inMemTimeLabel);
 
-    Label lastTouchTimeLabel = new Label("lastTouchTime: " , Label.LEFT) ;
-    lastTouchTimeLabel.reshape(285,195+25,110,15);
-    add(lastTouchTimeLabel);
+    Label sinceTouchTimeLabel = new Label("sinceTouchTime: " , Label.LEFT) ;
+    sinceTouchTimeLabel.reshape(285,195+25,110,15);
+    add(sinceTouchTimeLabel);
 
     Label lowLabel = new Label("low: " , Label.LEFT) ;
     lowLabel.reshape(285,210+25,110,15);
@@ -950,7 +950,7 @@ public class ControlPanel extends Frame
     RValueLabel.setText( Integer.toString( page.R ) );
     MValueLabel.setText( Integer.toString( page.M ) );
     inMemTimeValueLabel.setText( Integer.toString( page.inMemTime ) );
-    lastTouchTimeValueLabel.setText( Integer.toString( page.lastTouchTime ) );
+    sinceTouchTimeValueLabel.setText( Integer.toString( page.sinceTouchTime ) );
     lowValueLabel.setText(Long.toString( page.low , Kernel.addressradix ) );
     highValueLabel.setText(Long.toString( page.high , Kernel.addressradix ) );
   }
