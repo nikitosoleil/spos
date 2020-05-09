@@ -15,8 +15,8 @@ public class Kernel extends Thread {
     private String command_file;
     private String config_file;
     private ControlPanel controlPanel;
-    private Vector memVector = new Vector();
-    private Vector instructVector = new Vector();
+    private Vector<Page> memVector = new Vector<>();
+    private Vector<Instruction> instructVector = new Vector<>();
     private String status;
     private boolean doStdoutLog = false;
     private boolean doFileLog = false;
@@ -24,6 +24,9 @@ public class Kernel extends Thread {
     public int runcycles;
     public long block = (int) Math.pow(2, 12);
     public static byte addressradix = 10;
+    private int currentTime = 0;
+    private int resetInterval;
+    private int workingSetThreshold;
 
     public void init(String commands, String config) {
         File f = new File(commands);
@@ -39,8 +42,7 @@ public class Kernel extends Thread {
         int id = 0;
         int physical = 0;
         int physical_count = 0;
-        int inMemTime = 0;
-        int sinceTouchTime = 0;
+        int lastUseTime = 0;
         int map_count = 0;
         double power = 14;
         long high = 0;
@@ -71,7 +73,7 @@ public class Kernel extends Thread {
             for (i = 0; i <= virtPageNum; i++) {
                 high = (block * (i + 1)) - 1;
                 low = block * i;
-                memVector.addElement(new Page(i, -1, R, M, 0, 0, high, low));
+                memVector.addElement(new Page(i, -1, R, M, 0, high, low));
             }
             try {
                 DataInputStream in = new DataInputStream(new FileInputStream(f));
@@ -101,22 +103,16 @@ public class Kernel extends Thread {
                                 System.out.println("MemoryManagement: Invalid M value in " + config);
                                 System.exit(-1);
                             }
-                            inMemTime = Common.s2i(st.nextToken());
-                            if (inMemTime < 0) {
-                                System.out.println("MemoryManagement: Invalid inMemTime in " + config);
+                            lastUseTime = Common.s2i(st.nextToken());
+                            if (lastUseTime < 0) {
+                                System.out.println("MemoryManagement: Invalid lastUseTime in " + config);
                                 System.exit(-1);
                             }
-                            sinceTouchTime = Common.s2i(st.nextToken());
-                            if (sinceTouchTime < 0) {
-                                System.out.println("MemoryManagement: Invalid sinceTouchTime in " + config);
-                                System.exit(-1);
-                            }
-                            Page page = (Page) memVector.elementAt(id);
+                            Page page = memVector.elementAt(id);
                             page.physical = physical;
                             page.R = R;
                             page.M = M;
-                            page.inMemTime = inMemTime;
-                            page.sinceTouchTime = sinceTouchTime;
+                            page.lastUseTime = lastUseTime;
                         }
                     }
                     if (line.startsWith("enable_logging")) {
@@ -159,7 +155,7 @@ public class Kernel extends Thread {
                             System.exit(-1);
                         }
                         for (i = 0; i <= virtPageNum; i++) {
-                            Page page = (Page) memVector.elementAt(i);
+                            Page page = memVector.elementAt(i);
                             page.high = (block * (i + 1)) - 1;
                             page.low = block * i;
                         }
@@ -172,6 +168,30 @@ public class Kernel extends Thread {
                             addressradix = Byte.parseByte(tmp);
                             if (addressradix < 0 || addressradix > 20) {
                                 System.out.println("MemoryManagement: addressradix out of bounds.");
+                                System.exit(-1);
+                            }
+                        }
+                    }
+                    if (line.startsWith("resetInterval")) {
+                        StringTokenizer st = new StringTokenizer(line);
+                        while (st.hasMoreTokens()) {
+                            tmp = st.nextToken();
+                            tmp = st.nextToken();
+                            resetInterval = Integer.parseInt(tmp);
+                            if (addressradix < 0) {
+                                System.out.println("MemoryManagement: resetInterval out of bounds.");
+                                System.exit(-1);
+                            }
+                        }
+                    }
+                    if (line.startsWith("workingSetThreshold")) {
+                        StringTokenizer st = new StringTokenizer(line);
+                        while (st.hasMoreTokens()) {
+                            tmp = st.nextToken();
+                            tmp = st.nextToken();
+                            workingSetThreshold = Integer.parseInt(tmp);
+                            if (addressradix < 0) {
+                                System.out.println("MemoryManagement: workingSetThreshold out of bounds.");
                                 System.exit(-1);
                             }
                         }
@@ -227,12 +247,12 @@ public class Kernel extends Thread {
         }
         runs = 0;
         for (i = 0; i < virtPageNum; i++) {
-            Page page = (Page) memVector.elementAt(i);
+            Page page = memVector.elementAt(i);
             if (page.physical != -1) {
                 map_count++;
             }
             for (j = 0; j < virtPageNum; j++) {
-                Page tmp_page = (Page) memVector.elementAt(j);
+                Page tmp_page = memVector.elementAt(j);
                 if (tmp_page.physical == page.physical && page.physical >= 0) {
                     physical_count++;
                 }
@@ -245,7 +265,7 @@ public class Kernel extends Thread {
         }
         if (map_count < (virtPageNum + 1) / 2) {
             for (i = 0; i < virtPageNum; i++) {
-                Page page = (Page) memVector.elementAt(i);
+                Page page = memVector.elementAt(i);
                 if (page.physical == -1 && map_count < (virtPageNum + 1) / 2) {
                     page.physical = i;
                     map_count++;
@@ -253,7 +273,7 @@ public class Kernel extends Thread {
             }
         }
         for (i = 0; i < virtPageNum; i++) {
-            Page page = (Page) memVector.elementAt(i);
+            Page page = memVector.elementAt(i);
             if (page.physical == -1) {
                 controlPanel.removePhysicalPage(i);
             } else {
@@ -262,9 +282,10 @@ public class Kernel extends Thread {
         }
         for (i = 0; i < instructVector.size(); i++) {
             high = block * virtPageNum;
-            Instruction instruct = (Instruction) instructVector.elementAt(i);
+            Instruction instruct = instructVector.elementAt(i);
             if (instruct.addr < 0 || instruct.addr > high) {
-                System.out.println("MemoryManagement: Instruction (" + instruct.inst + " " + instruct.addr + ") out of bounds.");
+                System.out.println("MemoryManagement: Instruction (" + instruct.inst + " " + instruct.addr + ") " +
+                        "out of bounds.");
                 System.exit(-1);
             }
         }
@@ -275,7 +296,7 @@ public class Kernel extends Thread {
     }
 
     public void getPage(int pageNum) {
-        Page page = (Page) memVector.elementAt(pageNum);
+        Page page = memVector.elementAt(pageNum);
         controlPanel.paintPage(page);
     }
 
@@ -318,9 +339,10 @@ public class Kernel extends Thread {
     }
 
     public void step() {
+        currentTime += 1;
         int i = 0;
 
-        Instruction instruct = (Instruction) instructVector.elementAt(runs);
+        Instruction instruct = instructVector.elementAt(runs);
         controlPanel.instructionValueLabel.setText(instruct.inst);
         controlPanel.addressValueLabel.setText(Long.toString(instruct.addr, addressradix));
         getPage(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
@@ -328,7 +350,8 @@ public class Kernel extends Thread {
             controlPanel.pageFaultValueLabel.setText("NO");
         }
         if (instruct.inst.startsWith("READ")) {
-            Page page = (Page) memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
+            Page page = memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
+            page.R = 1;
             if (page.physical == -1) {
                 if (doFileLog) {
                     printLogFile("READ " + Long.toString(instruct.addr, addressradix) + " ... page fault");
@@ -336,11 +359,10 @@ public class Kernel extends Thread {
                 if (doStdoutLog) {
                     System.out.println("READ " + Long.toString(instruct.addr, addressradix) + " ... page fault");
                 }
-                PageFault.replacePage(memVector, virtPageNum, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel);
+                PageFault.replacePage(memVector, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel,
+                        currentTime, workingSetThreshold);
                 controlPanel.pageFaultValueLabel.setText("YES");
             } else {
-                page.R = 1;
-                page.sinceTouchTime = 0;
                 if (doFileLog) {
                     printLogFile("READ " + Long.toString(instruct.addr, addressradix) + " ... okay");
                 }
@@ -350,7 +372,9 @@ public class Kernel extends Thread {
             }
         }
         if (instruct.inst.startsWith("WRITE")) {
-            Page page = (Page) memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
+            Page page = memVector.elementAt(Addr2Page.pageNum(instruct.addr, virtPageNum, block));
+            page.R = 1;
+            page.M = 1;
             if (page.physical == -1) {
                 if (doFileLog) {
                     printLogFile("WRITE " + Long.toString(instruct.addr, addressradix) + " ... page fault");
@@ -358,11 +382,10 @@ public class Kernel extends Thread {
                 if (doStdoutLog) {
                     System.out.println("WRITE " + Long.toString(instruct.addr, addressradix) + " ... page fault");
                 }
-                PageFault.replacePage(memVector, virtPageNum, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel);
+                PageFault.replacePage(memVector, Addr2Page.pageNum(instruct.addr, virtPageNum, block), controlPanel,
+                        currentTime, workingSetThreshold);
                 controlPanel.pageFaultValueLabel.setText("YES");
             } else {
-                page.M = 1;
-                page.sinceTouchTime = 0;
                 if (doFileLog) {
                     printLogFile("WRITE " + Long.toString(instruct.addr, addressradix) + " ... okay");
                 }
@@ -372,13 +395,9 @@ public class Kernel extends Thread {
             }
         }
         for (i = 0; i < virtPageNum; i++) {
-            Page page = (Page) memVector.elementAt(i);
-            if (page.R == 1 && page.sinceTouchTime == 10) {
+            Page page = memVector.elementAt(i);
+            if (currentTime % resetInterval == 0) {
                 page.R = 0;
-            }
-            if (page.physical != -1) {
-                page.inMemTime = page.inMemTime + 10;
-                page.sinceTouchTime = page.sinceTouchTime + 10;
             }
         }
         runs++;
@@ -397,8 +416,7 @@ public class Kernel extends Thread {
         controlPanel.physicalPageValueLabel.setText("0");
         controlPanel.RValueLabel.setText("0");
         controlPanel.MValueLabel.setText("0");
-        controlPanel.inMemTimeValueLabel.setText("0");
-        controlPanel.sinceTouchTimeValueLabel.setText("0");
+        controlPanel.lastUseTimeValueLabel.setText("0");
         controlPanel.lowValueLabel.setText("0");
         controlPanel.highValueLabel.setText("0");
         init(command_file, config_file);

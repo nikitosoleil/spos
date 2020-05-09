@@ -1,2 +1,9 @@
-WRITE 80001 ... page fault
-WRITE 0 ... page fault
+WRITE 80000 ... page fault
+READ 4000 ... okay
+WRITE 84000 ... page fault
+READ 10000 ... okay
+WRITE 4000 ... okay
+READ c000 ... okay
+WRITE 88000 ... page fault
+WRITE 8c000 ... page fault
+WRITE 90000 ... page fault

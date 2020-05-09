@@ -81,8 +81,7 @@ public class ControlPanel extends Frame {
     Label physicalPageValueLabel = new Label("0", Label.LEFT);
     Label RValueLabel = new Label("0", Label.LEFT);
     Label MValueLabel = new Label("0", Label.LEFT);
-    Label inMemTimeValueLabel = new Label("0", Label.LEFT);
-    Label sinceTouchTimeValueLabel = new Label("0", Label.LEFT);
+    Label lastUseTimeValueLabel = new Label("0", Label.LEFT);
     Label lowValueLabel = new Label("0", Label.LEFT);
     Label highValueLabel = new Label("0", Label.LEFT);
     Label l0 = new Label(null, Label.CENTER);
@@ -534,11 +533,8 @@ public class ControlPanel extends Frame {
         MValueLabel.reshape(395, 165 + 25, 200, 15);
         add(MValueLabel);
 
-        inMemTimeValueLabel.reshape(395, 180 + 25, 200, 15);
-        add(inMemTimeValueLabel);
-
-        sinceTouchTimeValueLabel.reshape(395, 195 + 25, 200, 15);
-        add(sinceTouchTimeValueLabel);
+        lastUseTimeValueLabel.reshape(395, 180 + 25, 200, 15);
+        add(lastUseTimeValueLabel);
 
         lowValueLabel.reshape(395, 210 + 25, 230, 15);
         add(lowValueLabel);
@@ -598,13 +594,9 @@ public class ControlPanel extends Frame {
         MLabel.reshape(285, 165 + 25, 110, 15);
         add(MLabel);
 
-        Label inMemTimeLabel = new Label("inMemTime: ", Label.LEFT);
-        inMemTimeLabel.reshape(285, 180 + 25, 110, 15);
-        add(inMemTimeLabel);
-
-        Label sinceTouchTimeLabel = new Label("sinceTouchTime: ", Label.LEFT);
-        sinceTouchTimeLabel.reshape(285, 195 + 25, 110, 15);
-        add(sinceTouchTimeLabel);
+        Label lastUseTimeLabel = new Label("lastUseTime: ", Label.LEFT);
+        lastUseTimeLabel.reshape(285, 180 + 25, 110, 15);
+        add(lastUseTimeLabel);
 
         Label lowLabel = new Label("low: ", Label.LEFT);
         lowLabel.reshape(285, 210 + 25, 110, 15);
@@ -945,8 +937,7 @@ public class ControlPanel extends Frame {
         physicalPageValueLabel.setText(Integer.toString(page.physical));
         RValueLabel.setText(Integer.toString(page.R));
         MValueLabel.setText(Integer.toString(page.M));
-        inMemTimeValueLabel.setText(Integer.toString(page.inMemTime));
-        sinceTouchTimeValueLabel.setText(Integer.toString(page.sinceTouchTime));
+        lastUseTimeValueLabel.setText(Integer.toString(page.lastUseTime));
         lowValueLabel.setText(Long.toString(page.low, Kernel.addressradix));
         highValueLabel.setText(Long.toString(page.high, Kernel.addressradix));
     }
