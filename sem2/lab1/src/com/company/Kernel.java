@@ -398,7 +398,7 @@ public class Kernel extends Thread {
             Page page = memVector.elementAt(i);
             if (currentTime % resetInterval == 0) {
                 page.R = 0;
-                // TODO: page.lastUseTime =
+                page.lastUseTime = currentTime;
             }
         }
         runs++;

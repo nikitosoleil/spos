@@ -32,7 +32,7 @@ public class StringProcessor extends EndProcessor {
                 case OTHER:
                     if (ch == '\\' && !raw)
                         state = State.BACKSLASH;
-                    else if (ch == '\n') {
+                    else if (ch == '\n' || ch == (char) 0) {
                         bf.back(ch);
                         return new Token(Token.Type.ERROR, valueBuilder.toString());
                     } else {

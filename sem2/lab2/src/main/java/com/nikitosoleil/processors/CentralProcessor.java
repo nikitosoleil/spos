@@ -36,37 +36,49 @@ public class CentralProcessor extends EndProcessor {
             Character ch = bf.next();
             if (ch == (char) 0) {
                 return null;
-            } else if (ch == '\\') {
-                state = State.BACKSLASH;
-            } else if(ch == '\r') {
+            } else if (ch == '\r') {
 
-            }
-            else if (ch == '\n') {
+            } else if (ch == '\n') {
                 if (state == State.OTHER) {
                     state = State.NEWLINE;
                     return new Token(Token.Type.PUNCTUATION, "\n");
                 }
-            } else if (Python.isSpacer(ch)) {
-                if (state == State.NEWLINE)
-                    return new Token(Token.Type.INDENTATION, Character.toString(ch));
-            } else if (Python.isProhibited(ch)) {
-                return new Token(Token.Type.ERROR, value + ch);
-            } else if (ch == '#') {
-                return commentProcessor.process(value + ch);
+                if (state == State.BACKSLASH)
+                    state = State.OTHER;
             } else {
-                state = State.OTHER;
-                if (Python.isLetter(ch)) {
-                    return letterProcessor.process(value + ch);
-                } else if (Python.isStringEnclosure(ch)) {
-                    return stringProcessor.process(value + ch);
-                } else if (Python.isIdentifierStart(ch)) {
-                    return identifierProcessor.process(value + ch);
-                } else if (Python.isPartOfSymbolics(Character.toString(ch))) {
-                    if (ch == ',')
-                        state = State.COMMA;
-                    return symbolicProcessor.process(value + ch);
-                } else if (Python.isDigit(ch)) {
-                    return numberProcessor.process(value + ch);
+                if(state==State.BACKSLASH)
+                {
+                    Token token = commentProcessor.process(value + ch);
+                    token.setTokenType(Token.Type.ERROR);
+                    return token;
+                }
+                if (ch == '\\') {
+                    state = State.BACKSLASH;
+                } else if (Python.isSpacer(ch)) {
+                    if (state == State.NEWLINE)
+                        return new Token(Token.Type.INDENTATION, Character.toString(ch));
+                } else if (Python.isProhibited(ch)) {
+                    return new Token(Token.Type.ERROR, value + ch);
+                } else if (ch == '#') {
+                    return commentProcessor.process(value + ch);
+                } else {
+                    state = State.OTHER;
+                    if (Python.isLetter(ch)) {
+                        return letterProcessor.process(value + ch);
+                    } else if (Python.isStringEnclosure(ch)) {
+                        return stringProcessor.process(value + ch);
+                    } else if (Python.isIdentifierStart(ch)) {
+                        return identifierProcessor.process(value + ch);
+                    } else if (Python.isPartOfSymbolics(Character.toString(ch)) && ch != '.') {
+                        if (ch == ',')
+                            state = State.COMMA;
+                        return symbolicProcessor.process(value + ch);
+                    } else if (Python.isDigit(ch)) {
+                        return numberProcessor.process(value + ch);
+                    } else if(ch == '.') {
+                        bf.back(ch);
+                        return numberProcessor.process(value);
+                    }
                 }
             }
         }

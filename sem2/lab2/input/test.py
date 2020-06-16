@@ -1,7 +1,7 @@
 for i in range(n):
     l.append(i)
 l = []
-print(l)  # comment
+print l  # comment
 s = "a\ns\td" + "q\"w\'e"
 s += 'z\'x\"c'
 
@@ -10,7 +10,7 @@ class Test:
         self.name = r"Nikita\n"
 
     def print_name():
-        print(self.name)
+        print self.name
 
 f(a = 'b', # test
   c = 'c')
@@ -46,3 +46,14 @@ j = 100A
 k = 100.j
 l = 1.15e3J
 m = 1e15l
+
+a = \\\\n
+b = .5
+c = 10.
+d = .15e-3
+f = .15j
+g = .0E0
+g = .0E0E
+123asd
+h = .L
+k = .a0

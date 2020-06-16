@@ -14,7 +14,7 @@ public class CommentProcessor extends EndProcessor {
         StringBuilder valueBuilder = new StringBuilder(value);
         while (true) {
             char ch = bf.next();
-            if (ch == '\n')
+            if (ch == '\n' || ch == (char) 0)
             {
                 bf.back(ch);
                 return new Token(Token.Type.COMMENT, valueBuilder.toString());

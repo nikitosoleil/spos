@@ -24,8 +24,6 @@ public class PageFault {
         boolean found = false;
         for (Page page : mem) {
             if (page.physical != -1) {
-                if (page.R == 1)
-                    page.lastUseTime = time;
                 if (!found) {
                     System.out.println("page: " + page.id + " " + page.R + " " + page.M + " " + page.lastUseTime);
                     boolean update = false;

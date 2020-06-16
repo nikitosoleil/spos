@@ -45,20 +45,26 @@ public class NumberProcessor extends EndProcessor {
                     }
                     break;
                 case FLOAT:
+                    System.out.println(value + " " + ch);
                     if (Python.isDigit(ch))
                         value += ch;
-                    else if (Python.isExponent(ch)) {
-                        value += ch;
-                        state = State.EXP_START;
-                    } else if (Python.isImaginarySuffix(ch)) {
-                        value += ch;
-                        state = State.SUFFIX;
-                    } else if (Python.isIdentifierStart(ch)) {
-                        value += ch;
-                        state = State.ERROR;
+                    else if (value.length() > 1) {
+                        if (Python.isExponent(ch)) {
+                            value += ch;
+                            state = State.EXP_START;
+                        } else if (Python.isImaginarySuffix(ch)) {
+                            value += ch;
+                            state = State.SUFFIX;
+                        } else if (Python.isIdentifierStart(ch)) {
+                            value += ch;
+                            state = State.ERROR;
+                        } else {
+                            bf.back(ch);
+                            return new Token(Token.Type.NUMBER, value);
+                        }
                     } else {
                         bf.back(ch);
-                        return new Token(Token.Type.NUMBER, value);
+                        return new Token(Token.Type.PUNCTUATION, value);
                     }
                     break;
                 case EXP_START:
